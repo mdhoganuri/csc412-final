@@ -9,6 +9,7 @@ Our final project for the CSC 412 course at the University of Rhode Island (URI)
 3. Watch it go! :D
 
 ### Sample Execution
+n/a
 
 ## Project Report
 | Version # | Status |
