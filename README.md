@@ -19,7 +19,6 @@ n/a
 | 3 | Incomplete. |
 | 4 | Incomplete. |
 | 5 | Incomplete. |
-| 1 | Incomplete. |
 | EC1 | Incomplete. |
 | EC2 | Incomplete. |
 | EC3 | Incomplete. |
