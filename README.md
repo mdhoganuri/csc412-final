@@ -30,7 +30,7 @@ n/a
 | EC9 | Incomplete. |
 | EC10 | Incomplete. |
 
-**Note to selves**: Insert/embed report here once written.
+**Report Document**: [Click Here](https://docs.google.com/document/d/14JoR9pFftxTYR84h85z7gBj7KmjU0FPTZACrFsum8zM/edit?usp=sharing)
 
 ## Contributors
 - Matt Hogan
