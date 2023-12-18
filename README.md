@@ -1,17 +1,21 @@
 # CSC 412 Final Project
+
 Our final project for the CSC 412 course at the University of Rhode Island (URI).
 
 ## Setup & Execution
+
 1. Compile the program using the command:
-   ``g++ -Wall -Wno-deprecated -std=c++20 *.cpp -o main``
+   ``g++ -Wall -Wno-deprecated -std=c++20 *.cpp -framework OpenGL -framework GLUT -o main``
 2. Run the program using the command"
-   ``./main``
+   ``./main <width> <height> <# of travelers> <# of moves for segment>``
 3. Watch it go! :D
 
 ### Sample Execution
+
 n/a
 
 ## Project Report
+
 | Version # | Status |
 | :--- | :--- |
 | 1 | Incomplete. |
@@ -33,5 +37,6 @@ n/a
 **Report Document**: [Click Here](https://docs.google.com/document/d/14JoR9pFftxTYR84h85z7gBj7KmjU0FPTZACrFsum8zM/edit?usp=sharing)
 
 ## Contributors
+
 - Matt Hogan
 - Ben Thomas
