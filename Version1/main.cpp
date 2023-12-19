@@ -471,7 +471,7 @@ vector<Direction> getLegalDirectionList (Traveler &traveler) {
 	int col = traveler.segmentList[0].col;
 
 	/* Check NORTH. */
-	if (row - 1 > 0) {
+	if (row - 1 >= 0) {
 		std::cout << "\tChecking NORTH" << endl;
 		if (grid[row - 1][col] == SquareType::FREE_SQUARE || grid[row - 1][col] == SquareType::EXIT) {
 			legalDirectionList.push_back(Direction::NORTH);
@@ -501,7 +501,7 @@ vector<Direction> getLegalDirectionList (Traveler &traveler) {
 	}
 
 	/* Check WEST. */
-	if (col - 1 > 0) {
+	if (col - 1 >= 0) {
 		std::cout << "\tChecking WEST" << endl;
 		if (grid[row][col - 1] == SquareType::FREE_SQUARE || grid[row][col - 1] == SquareType::EXIT) {
 			legalDirectionList.push_back(Direction::WEST);
