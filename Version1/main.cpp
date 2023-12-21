@@ -17,6 +17,11 @@
 //
 #include "gl_frontEnd.h"
 
+#include <unistd.h>
+
+void displayGridPaneFunc(void);
+void displayStatePaneFunc(void);
+
 //	feel free to "un-use" std if this is against your beliefs.
 using namespace std;
 
@@ -28,7 +33,6 @@ using namespace std;
 #endif
 
 void initializeApplication(void);
-	void update(int value);
 	void moveTravelers ();
 	vector<Direction> getLegalDirectionList (Traveler &traveler);
 	Direction getNewDirection (vector<Direction> legalDirectionList);
@@ -63,7 +67,7 @@ GridPosition	exitPos;	//	location of the exit
 
 //	travelers' sleep time between moves (in microseconds)
 const int MIN_SLEEP_TIME = 1000;
-int travelerSleepTime = 100000;
+int travelerSleepTime = 1000;
 
 //	An array of C-string where you can store things you want displayed
 //	in the state pane to display (for debugging purposes?)
@@ -104,7 +108,6 @@ void drawTravelers(void)
 	//-----------------------------
 	for (unsigned int k=0; k<travelerList.size(); k++)
 	{
-		//	here I would test if the traveler thread is still live
 		drawTraveler(travelerList[k]);
 	}
 }
@@ -131,35 +134,33 @@ void updateMessages(void)
 
 void handleKeyboardEvent(unsigned char c, int x, int y)
 {
-	int ok = 0;
+    int ok = 0;
 
-	switch (c)
-	{
-		//	'esc' to quit
-		case 27:
-			exit(0);
-			break;
+    switch (c)
+    {
+        case 27: // 'esc' to quit
+            exit(0);
+            break;
 
-		//	slowdown
-		case ',':
-			slowdownTravelers();
-			ok = 1;
-			break;
+        case ',':
+            slowdownTravelers();
+            ok = 1;
+            break;
 
-		//	speedup
-		case '.':
-			speedupTravelers();
-			ok = 1;
-			break;
+        case '.':
+            speedupTravelers();
+            ok = 1;
+            break;
 
-		default:
-			ok = 1;
-			break;
-	}
-	if (!ok)
-	{
-		//	do something?
-	}
+        default:
+            ok = 1;
+            break;
+    }
+
+    if (!ok)
+    {
+        // do something?
+    }
 }
 
 
@@ -224,6 +225,8 @@ int main(int argc, char* argv[])
 	//	we set up earlier will be called when the corresponding event
 	//	occurs
 	glutMainLoop();
+
+	moveTravelers();
 	
 	//	Free allocated resource before leaving (not absolutely needed, but
 	//	just nicer.  Also, if you crash there, you know something is wrong
@@ -299,28 +302,37 @@ void initializeApplication(void)
 		grid[pos.row][pos.col] = SquareType::TRAVELER;
 
 		//    I add 0-n segments to my travelers
-        unsigned int numAddSegments = segmentNumberGenerator(engine);
-        TravelerSegment currSeg = traveler.segmentList[0];
-        bool canAddSegment = true;
-        cout << "Traveler " << k << " at (row=" << pos.row << ", col=" <<
-        pos.col << "), direction: " << dirStr(dir) << ", with up to " << numAddSegments << " additional segments" << endl;
-        cout << "\t";
+ 	   unsigned int numAddSegments = segmentNumberGenerator(engine);
+ 	   TravelerSegment currSeg = traveler.segmentList[0];
+ 	   bool canAddSegment = true;
+ 	   cout << "Traveler " << k << " at (row=" << pos.row << ", col=" <<
+ 	   pos.col << "), direction: " << dirStr(dir) << ", with up to " << numAddSegments << " additional segments" << endl;
+ 	   cout << "\t";
 
-        for (unsigned int s=0; s<numAddSegments && canAddSegment; s++){
-            TravelerSegment newSeg = newTravelerSegment(currSeg, canAddSegment);
-            if (canAddSegment){
-                traveler.segmentList.push_back(newSeg);
-                grid[newSeg.row][newSeg.col] = SquareType::TRAVELER;
-                currSeg = newSeg;
-                cout << dirStr(newSeg.dir) << "  ";
-            }
-        }
-        cout << endl;
+    	for (unsigned int s=0; s<numAddSegments && canAddSegment; s++){
+    	    	TravelerSegment newSeg = newTravelerSegment(currSeg, canAddSegment);
+   	     	if (canAddSegment){
+    	        traveler.segmentList.push_back(newSeg);
+    	        grid[newSeg.row][newSeg.col] = SquareType::TRAVELER;
+    	        currSeg = newSeg;
+    	        cout << dirStr(newSeg.dir) << "  ";
+    	    }
+    	}	
+    	cout << endl;
 
 		for (unsigned int c=0; c<4; c++)
 			traveler.rgba[c] = travelerColor[k][c];
-		
+		// Add thread traveler(moveTraveler, C)
 		travelerList.push_back(traveler);
+		/*
+		for (int i = 0; i < numTravelers; i++) 	{
+			// Add thread traveler(moveTraveler, C)
+			moveTravelers();
+			travelerList.push_back(traveler);
+			numLiveThreads++;
+
+		}
+		*/
 	}
 	
 	//	free array of colors
@@ -329,28 +341,16 @@ void initializeApplication(void)
 	delete []travelerColor;
 
 	//	Now that we have the traveler list, we can start the threads
-	moveTravelers();
-	//glutTimerFunc(100, update, 0);
-}
-
-void update(int value) {
-    // Update the state of your application here
-	moveTravelers();
-    glutPostRedisplay();  // Trigger a redraw
-    glutTimerFunc(100, update, 16);  // 60 frames per second
 }
 
 void moveTravelers () {
-	std::cout << "BEGIN moveTravelers()" << endl;
+	std::cout << "BEGIN moveTraveler()" << endl;
 
-	for (int i = 0; i < numTravelers; i++) {
+	for (unsigned int i=0; i<numTravelers; i++) {
 		Traveler *traveler = &travelerList[i];
 
 		while (!(traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col)) {
-
-
 			vector<Direction> legalDirectionList = getLegalDirectionList(*traveler);
-
 
 			Direction newDirection = getNewDirection(legalDirectionList);
 			std::cout << "\tTRAVELER START AT ROW " << traveler->segmentList[0].row << " COL " << traveler->segmentList[0].col << endl;
@@ -420,18 +420,22 @@ void moveTravelers () {
 				numTravelersDone++;
 				std::cout << "\tTRAVELER DONE" << endl;
 				// std::cout << traveler->segmentList.size() << endl;
+				/*
 				for (int i = 0; traveler->segmentList.size() > 0; i++) {
 					TravelerSegment seg = traveler->segmentList.back();
 					traveler->segmentList.pop_back();
 					grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
 				}
+				*/
 				// std::cout << traveler->segmentList.size() << endl;
 				grid[exitPos.row][exitPos.col] = SquareType::EXIT;
 			}
+			drawTravelers();
+			
+			usleep(travelerSleepTime);
 		}
 	}
-
-	std::cout << "END moveTravelers()" << endl;
+	std::cout << "END moveTraveler()" << endl;
 }
 
 void removeSegment(Traveler *traveler) {
@@ -826,4 +830,3 @@ void generatePartitions(void)
 		}
 	}
 }
-
