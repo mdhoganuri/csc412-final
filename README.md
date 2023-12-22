@@ -5,8 +5,10 @@ Our final project for the CSC 412 course at the University of Rhode Island (URI)
 ## Setup & Execution
 
 1. Compile the program using the command:
+   
    ``g++ -Wall -Wno-deprecated -std=c++20 *.cpp -framework OpenGL -framework GLUT -o main``
 2. Run the program using the command"
+   
    ``./main <width> <height> <# of travelers> (OPT: <# of moves for segment>)``
 3. Watch it go! :D
 
@@ -20,8 +22,8 @@ n/a
 | :--- | :--- |
 | 1 | COMPLETE. |
 | 2 | COMPLETE. |
-| 3 | Work in progress. |
-| 4 | Incomplete. |
+| 3 | COMPLETE. |
+| 4 | Work in progress. |
 | 5 | Incomplete. |
 | EC1 | Incomplete. |
 | EC2 | Incomplete. |
