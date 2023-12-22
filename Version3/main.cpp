@@ -418,23 +418,22 @@ void moveThreaded (TravelerThreadInfo *info) {
 		std::cout << "\tEND      ROW " << exitPos.row << " COL " << exitPos.col << endl;
 
 		if (traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col) {
-			numLiveThreads--;
 			numTravelersDone++;
 			std::cout << "\tTRAVELER DONE" << endl;
-			// std::cout << traveler->segmentList.size() << endl;
-			
-			while (traveler->segmentList.size() > 1) {
-				TravelerSegment seg = traveler->segmentList.back();
-				traveler->segmentList.pop_back();
-				grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
-			}
-			
-			// std::cout << traveler->segmentList.size() << endl;
 			grid[exitPos.row][exitPos.col] = SquareType::EXIT;
 		}
 
 		std::cout << "END moveTraveler()" << endl;
 	}
+	
+	while (traveler->segmentList.size() > 1) {
+		usleep((*info->sleepTime) * 1000);
+
+		TravelerSegment seg = traveler->segmentList.back();
+		traveler->segmentList.pop_back();
+		grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
+	}
+	numLiveThreads--;
 }
 
 void removeSegment(Traveler *traveler) {

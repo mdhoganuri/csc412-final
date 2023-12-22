@@ -406,19 +406,15 @@ void moveTravelers (int value) {
 			if (traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col) {
 				numTravelersDone++;
 				std::cout << "\tTRAVELER DONE" << endl;
-				// std::cout << traveler->segmentList.size() << endl;
-				
-				while (traveler->segmentList.size() > 1) {
-					TravelerSegment seg = traveler->segmentList.back();
-					traveler->segmentList.pop_back();
-					grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
-				}
-				
-				// std::cout << traveler->segmentList.size() << endl;
 				grid[exitPos.row][exitPos.col] = SquareType::EXIT;
 			}
 
 			std::cout << "END moveTraveler()" << endl;
+		}
+		else if (traveler->segmentList.size() > 1) {
+			TravelerSegment seg = traveler->segmentList.back();
+			traveler->segmentList.pop_back();
+			grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
 		}
 	}
 	drawTravelers();
