@@ -26,6 +26,11 @@ void displayStatePaneFunc(void);
 //	feel free to "un-use" std if this is against your beliefs.
 using namespace std;
 
+struct TravelerThreadInfo {
+	Traveler *traveler;
+	int *sleepTime;
+};
+
 #if 0
 //-----------------------------------------------------------------------------
 #pragma mark -
@@ -34,8 +39,7 @@ using namespace std;
 #endif
 
 void initializeApplication(void);
-	void threadJob (void* info);
-	void updateTravelers (int value);
+	void moveThreaded (TravelerThreadInfo *info);
 	vector<Direction> getLegalDirectionList (Traveler &traveler);
 	Direction getNewDirection (vector<Direction> legalDirectionList);
 	void removeSegment(Traveler *traveler);
@@ -66,6 +70,7 @@ unsigned int numLiveThreads = 0;		//	the number of live traveler threads
 vector<Traveler> travelerList;
 vector<SlidingPartition> partitionList;
 GridPosition	exitPos;	//	location of the exit
+vector<thread> threadList;
 
 //	travelers' sleep time between moves (in microseconds)
 const int MIN_SLEEP_TIME = 10;
@@ -90,11 +95,6 @@ uniform_int_distribution<unsigned int> headsOrTails(0, 1);
 uniform_int_distribution<unsigned int> rowGenerator;
 uniform_int_distribution<unsigned int> colGenerator;
 
-struct ThreadInfo {
-    std::thread::id id;
-	int travelerID;
-};
-
 #if 0
 //-----------------------------------------------------------------------------
 #pragma mark -
@@ -107,24 +107,14 @@ struct ThreadInfo {
 //	to make sure that access to critical section is properly synchronized
 //==================================================================================
 
-void drawTravelers(void)
-{
-	//-----------------------------
+void drawTravelers (void) {
 	//	You may have to sychronize things here
-	//-----------------------------
-	for (unsigned int k=0; k<travelerList.size(); k++)
-	{
-		/*
-		while (!(travelerList[k].segmentList[0].row == exitPos.row && travelerList[k].segmentList[0].col == exitPos.col)) {
-			// moveTraveler(traveler)
-		}
-		*/
+	for (unsigned int k=0; k<travelerList.size(); k++) {
 		drawTraveler(travelerList[k]);
 	}
 }
 
-void updateMessages(void)
-{
+void updateMessages (void) {
 	//	Here I hard-code a few messages that I want to see displayed
 	//	in my state pane.  The number of live robot threads will
 	//	always get displayed.  No need to pass a message about it.
@@ -143,69 +133,55 @@ void updateMessages(void)
 	drawMessages(numMessages, message);
 }
 
-void handleKeyboardEvent(unsigned char c, int x, int y)
-{
+void handleKeyboardEvent (unsigned char c, int x, int y) {
     int ok = 0;
 
-    switch (c)
-    {
+    switch (c) {
         case 27: // 'esc' to quit
             exit(0);
             break;
-
-        case 's':
+        case 'a':
             slowdownTravelers();
             ok = 1;
             break;
-
-        case 'f':
+        case 'd':
             speedupTravelers();
             ok = 1;
             break;
-
         default:
             ok = 1;
             break;
     }
 
-    if (!ok)
-    {
+    if (!ok) {
         // do something?
     }
 }
-
 
 //------------------------------------------------------------------------
 //	You shouldn't have to touch this one.  Definitely if you don't
 //	add the "producer" threads, and probably not even if you do.
 //------------------------------------------------------------------------
-void speedupTravelers(void)
-{
+void speedupTravelers (void) {
 	//	decrease sleep time by 20%, but don't get too small
 	int newSleepTime = (8 * travelerSleepTime) / 10;
 	
-	if (newSleepTime > MIN_SLEEP_TIME)
-	{
+	if (newSleepTime > MIN_SLEEP_TIME) {
 		travelerSleepTime = newSleepTime;
 	}
 }
 
-void slowdownTravelers(void)
-{
+void slowdownTravelers (void) {
 	//	increase sleep time by 20%.  No upper limit on sleep time.
 	//	We can slow everything down to admistrative pace if we want.
 	travelerSleepTime = (12 * travelerSleepTime) / 10;
 }
 
-
-
-
 //------------------------------------------------------------------------
 //	You shouldn't have to change anything in the main function besides
 //	initialization of the various global variables and lists
 //------------------------------------------------------------------------
-int main(int argc, char* argv[])
-{
+int main (int argc, char* argv[]) {
 	//	We know that the arguments  of the program  are going
 	//	to be the width (number of columns) and height (number of rows) of the
 	//	grid, the number of travelers, etc.
@@ -213,10 +189,7 @@ int main(int argc, char* argv[])
 	numRows = std::atoi(argv[2]);
 	numCols = std::atoi(argv[1]);
 	numTravelers = std::atoi(argv[3]);
-
-	if (argc > 4) {
-		numAddSegments = std::atoi(argv[4]);
-	}
+	(argc > 4) ? numAddSegments = std::atoi(argv[4]) : numAddSegments = INT_MAX;
 	numLiveThreads = 0;
 	numTravelersDone = 0;
 
@@ -228,7 +201,6 @@ int main(int argc, char* argv[])
 
 	//	Now we can do application-level initialization
 	initializeApplication();
-	glutTimerFunc(travelerSleepTime, updateTravelers, 0);
 
 	launchTime = time(NULL);
 
@@ -259,27 +231,24 @@ int main(int argc, char* argv[])
 //	This is a function that you have to edit and add to.
 //
 //==================================================================================
-
-void initializeApplication(void)
-{
+void initializeApplication (void) {
 	//	Initialize some random generators
 	rowGenerator = uniform_int_distribution<unsigned int>(0, numRows-1);
 	colGenerator = uniform_int_distribution<unsigned int>(0, numCols-1);
 
 	//	Allocate the grid
 	grid = new SquareType*[numRows];
-	for (unsigned int i=0; i<numRows; i++)
-	{
+	for (unsigned int i=0; i<numRows; i++) {
 		grid[i] = new SquareType[numCols];
 		for (unsigned int j=0; j< numCols; j++)
 			grid[i][j] = SquareType::FREE_SQUARE;
-		
 	}
 
 	message = new char*[MAX_NUM_MESSAGES];
+
 	for (unsigned int k=0; k<MAX_NUM_MESSAGES; k++)
 		message[k] = new char[MAX_LENGTH_MESSAGE+1];
-		
+	
 	//---------------------------------------------------------------
 	//	All the code below to be replaced/removed
 	//	I initialize the grid's pixels to have something to look at
@@ -287,6 +256,7 @@ void initializeApplication(void)
 	//	Yes, I am using the C random generator after ranting in class that the C random
 	//	generator was junk.  Here I am not using it to produce "serious" data (as in a
 	//	real simulation), only wall/partition location and some color
+
 	srand((unsigned int) time(NULL));
 
 	//	generate a random exit
@@ -300,7 +270,8 @@ void initializeApplication(void)
 	//	Initialize traveler info structs
 	//	You will probably need to replace/complete this as you add thread-related data
 	float** travelerColor = createTravelerColors(numTravelers);
-	for (unsigned int k=0; k<numTravelers; k++) {
+
+	for (unsigned int k = 0; k < numTravelers; k++) {
 		GridPosition pos = getNewFreePosition();
 		//	Note that treating an enum as a sort of integer is increasingly
 		//	frowned upon, as C++ versions progress
@@ -308,7 +279,6 @@ void initializeApplication(void)
 
 		TravelerSegment seg = {pos.row, pos.col, dir};
 		Traveler traveler;
-		
 		traveler.segmentList.push_back(seg);
 		grid[pos.row][pos.col] = SquareType::TRAVELER;
 
@@ -333,9 +303,8 @@ void initializeApplication(void)
 
 		for (unsigned int c=0; c<4; c++)
 			traveler.rgba[c] = travelerColor[k][c];
-
+		
 		travelerList.push_back(traveler);
-
 	}
 	
 	//	free array of colors
@@ -344,27 +313,22 @@ void initializeApplication(void)
 	delete []travelerColor;
 
 	// Now that we have the traveler list, we can start the threads
-	for (unsigned int i = 0; i < numTravelers; i++) {
-		try {
-			ThreadInfo info;
-			info.id = std::this_thread::get_id();
-			info.travelerID = i;
+	for (unsigned int k = 0; k < numTravelers; k++) {
+		TravelerThreadInfo *info = new TravelerThreadInfo;
+		info->traveler = &travelerList[k];
+		info->sleepTime = &travelerSleepTime;
 
-			thread travelerThread(threadJob, &info);
-			numLiveThreads++;
-		} catch (const exception &err) {
-			cerr << err.what() << endl;
-		}
+		threadList.push_back(thread(moveThreaded, info));
+		numLiveThreads++;
 	}
 }
 
-void threadJob (void *info) {
-	ThreadInfo *myInfo = static_cast<ThreadInfo*>(info);
+void moveThreaded (TravelerThreadInfo *info) {
+	Traveler *traveler = info->traveler;
 
-	Traveler *traveler = &travelerList[myInfo->travelerID];
-
-	// ..step toward the end (if not at the exit already)!
+	// ..step once (if not at the exit already)!
 	while (!(traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col)) {
+		usleep((*info->sleepTime) * 1000);
 
 		std::cout << "BEGIN moveTraveler()" << endl;
 		vector<Direction> legalDirectionList = getLegalDirectionList(*traveler);
@@ -442,8 +406,8 @@ void threadJob (void *info) {
 		std::cout << "\tEND      ROW " << exitPos.row << " COL " << exitPos.col << endl;
 
 		if (traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col) {
-			numTravelersDone++;
 			numLiveThreads--;
+			numTravelersDone++;
 			std::cout << "\tTRAVELER DONE" << endl;
 			// std::cout << traveler->segmentList.size() << endl;
 			
@@ -456,12 +420,9 @@ void threadJob (void *info) {
 			// std::cout << traveler->segmentList.size() << endl;
 			grid[exitPos.row][exitPos.col] = SquareType::EXIT;
 		}
-	}
-}
 
-void updateTravelers (int value) {
-	drawTravelers();
-	glutTimerFunc(travelerSleepTime, updateTravelers, 0);
+		std::cout << "END moveTraveler()" << endl;
+	}
 }
 
 void removeSegment(Traveler *traveler) {
