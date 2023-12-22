@@ -317,7 +317,7 @@ void initializeApplication (void) {
 	delete []travelerColor;
 
 	// Now that we have the traveler list, we can start the threads
-	// moveTravelers();
+	numLiveThreads++;
 }
 
 void moveTravelers (int value) {
@@ -522,32 +522,41 @@ Direction getNewDirection (Traveler &traveler, vector<Direction> legalDirectionL
 
 	int xDist = traveler.segmentList[0].col - exitPos.col;
 	int yDist = traveler.segmentList[0].row - exitPos.row;
-	bool xAxisFailed = false;
 
 	cout << "xDist: " << xDist << endl;
 	cout << "yDist: " << yDist << endl;
 
 	if (abs(xDist) > abs(yDist)) {
-		if (xDist < 0 && isLegalDirection(Direction::EAST, legalDirectionList)) {
-			cout << "EAST" << endl;
-			return Direction::EAST;
+		if (xDist < 0) {
+			if (isLegalDirection(Direction::EAST, legalDirectionList)) {
+				cout << "EAST" << endl;
+				return Direction::EAST;
+			}
+			return legalDirectionList[rand() % legalDirectionList.size()];
 		}
-		else if (xDist > 0 && isLegalDirection(Direction::WEST, legalDirectionList)) {
-			cout << "WEST" << endl;
-			return Direction::WEST;
-		} else {
-			xAxisFailed = true;
+		if (xDist > 0) {
+			if (isLegalDirection(Direction::WEST, legalDirectionList)) {
+				cout << "WEST" << endl;
+				return Direction::WEST;
+			}
+			return legalDirectionList[rand() % legalDirectionList.size()];
 		}
 	}
 	
-	if (abs(xDist) < abs(yDist) || xAxisFailed) {
-		if (yDist > 0 && isLegalDirection(Direction::NORTH, legalDirectionList)) {
-			cout << "NORTH" << endl;
-			return Direction::NORTH;
+	if (abs(xDist) < abs(yDist)) {
+		if (yDist > 0) {
+			if (isLegalDirection(Direction::NORTH, legalDirectionList)) {
+				cout << "NORTH" << endl;
+				return Direction::NORTH;
+			}
+			return legalDirectionList[rand() % legalDirectionList.size()];
 		}
-		else if (yDist < 0 && isLegalDirection(Direction::SOUTH, legalDirectionList)) {
-			cout << "SOUTH" << endl;
-			return Direction::SOUTH;
+		if (yDist < 0) {
+			if (isLegalDirection(Direction::SOUTH, legalDirectionList)) {
+				cout << "SOUTH" << endl;
+				return Direction::SOUTH;
+			}
+			return legalDirectionList[rand() % legalDirectionList.size()];
 		}
 	}
 	return legalDirectionList[rand() % legalDirectionList.size()];
