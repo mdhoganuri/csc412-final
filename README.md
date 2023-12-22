@@ -25,7 +25,7 @@ n/a
 | 3 | COMPLETE. |
 | 4 | Work in progress. |
 | 5 | Incomplete. |
-| EC1 | Incomplete. |
+| EC1 | COMPLETE. |
 | EC2 | Incomplete. |
 | EC3 | Incomplete. |
 | EC4 | Incomplete. |
