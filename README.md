@@ -7,7 +7,7 @@ Our final project for the CSC 412 course at the University of Rhode Island (URI)
 1. Compile the program using the command:
    ``g++ -Wall -Wno-deprecated -std=c++20 *.cpp -framework OpenGL -framework GLUT -o main``
 2. Run the program using the command"
-   ``./main <width> <height> <# of travelers> <# of moves for segment>``
+   ``./main <width> <height> <# of travelers> (OPT: <# of moves for segment>)``
 3. Watch it go! :D
 
 ### Sample Execution
@@ -19,7 +19,7 @@ n/a
 | Version # | Status |
 | :--- | :--- |
 | 1 | COMPLETE. |
-| 2 | Incomplete. |
+| 2 | Work In Progress. |
 | 3 | Incomplete. |
 | 4 | Incomplete. |
 | 5 | Incomplete. |

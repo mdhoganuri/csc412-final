@@ -627,7 +627,7 @@ void myTimerFunc(int value)
 
     myDisplayFunc();
 
-	glutTimerFunc(15, myTimerFunc, 0);
+	glutTimerFunc(200, myTimerFunc, 0);
 }
 
 #if 0

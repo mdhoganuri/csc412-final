@@ -147,12 +147,12 @@ void handleKeyboardEvent(unsigned char c, int x, int y)
             exit(0);
             break;
 
-        case 's':
+        case GLUT_KEY_LEFT:
             slowdownTravelers();
             ok = 1;
             break;
 
-        case 'f':
+        case GLUT_KEY_RIGHT:
             speedupTravelers();
             ok = 1;
             break;
@@ -436,7 +436,7 @@ void moveTravelers (int value) {
 				std::cout << "\tTRAVELER DONE" << endl;
 				// std::cout << traveler->segmentList.size() << endl;
 				
-				for (int i = 0; traveler->segmentList.size() > 0; i++) {
+				while (traveler->segmentList.size() > 1) {
 					TravelerSegment seg = traveler->segmentList.back();
 					traveler->segmentList.pop_back();
 					grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
