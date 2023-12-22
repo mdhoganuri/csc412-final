@@ -18,7 +18,7 @@ n/a
 
 | Version # | Status |
 | :--- | :--- |
-| 1 | Incomplete. |
+| 1 | COMPLETE. |
 | 2 | Incomplete. |
 | 3 | Incomplete. |
 | 4 | Incomplete. |

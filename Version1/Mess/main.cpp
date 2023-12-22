@@ -17,11 +17,6 @@
 //
 #include "gl_frontEnd.h"
 
-#include <unistd.h>
-
-void displayGridPaneFunc(void);
-void displayStatePaneFunc(void);
-
 //	feel free to "un-use" std if this is against your beliefs.
 using namespace std;
 
@@ -33,10 +28,6 @@ using namespace std;
 #endif
 
 void initializeApplication(void);
-	void moveTravelers (int value);
-	vector<Direction> getLegalDirectionList (Traveler &traveler);
-	Direction getNewDirection (vector<Direction> legalDirectionList);
-	void removeSegment(Traveler *traveler);
 GridPosition getNewFreePosition(void);
 Direction newDirection(Direction forbiddenDir = Direction::NUM_DIRECTIONS);
 TravelerSegment newTravelerSegment(const TravelerSegment& currentSeg, bool& canAdd);
@@ -57,8 +48,6 @@ SquareType** grid;
 unsigned int numRows = 0;	//	height of the grid
 unsigned int numCols = 0;	//	width
 unsigned int numTravelers = 0;	//	initial number
-unsigned int numAddSegments = 0;
-unsigned int counter = 0; // counter for when segments will be added
 unsigned int numTravelersDone = 0;
 unsigned int numLiveThreads = 0;		//	the number of live traveler threads
 vector<Traveler> travelerList;
@@ -66,8 +55,8 @@ vector<SlidingPartition> partitionList;
 GridPosition	exitPos;	//	location of the exit
 
 //	travelers' sleep time between moves (in microseconds)
-const int MIN_SLEEP_TIME = 10;
-int travelerSleepTime = 1000;
+const int MIN_SLEEP_TIME = 1000;
+int travelerSleepTime = 100000;
 
 //	An array of C-string where you can store things you want displayed
 //	in the state pane to display (for debugging purposes?)
@@ -108,11 +97,7 @@ void drawTravelers(void)
 	//-----------------------------
 	for (unsigned int k=0; k<travelerList.size(); k++)
 	{
-		/*
-		while (!(travelerList[k].segmentList[0].row == exitPos.row && travelerList[k].segmentList[0].col == exitPos.col)) {
-			// moveTraveler(traveler)
-		}
-		*/
+		//	here I would test if the traveler thread is still live
 		drawTraveler(travelerList[k]);
 	}
 }
@@ -125,7 +110,7 @@ void updateMessages(void)
 	unsigned int numMessages = 4;
 	sprintf(message[0], "We created %d travelers", numTravelers);
 	sprintf(message[1], "%d travelers solved the maze", numTravelersDone);
-	sprintf(message[2], "CSC 412 Final Project");
+	sprintf(message[2], "I like cheese");
 	sprintf(message[3], "Simulation run time: %ld s", time(NULL)-launchTime);
 	
 	//---------------------------------------------------------
@@ -139,33 +124,35 @@ void updateMessages(void)
 
 void handleKeyboardEvent(unsigned char c, int x, int y)
 {
-    int ok = 0;
+	int ok = 0;
 
-    switch (c)
-    {
-        case 27: // 'esc' to quit
-            exit(0);
-            break;
+	switch (c)
+	{
+		//	'esc' to quit
+		case 27:
+			exit(0);
+			break;
 
-        case 's':
-            slowdownTravelers();
-            ok = 1;
-            break;
+		//	slowdown
+		case ',':
+			slowdownTravelers();
+			ok = 1;
+			break;
 
-        case 'f':
-            speedupTravelers();
-            ok = 1;
-            break;
+		//	speedup
+		case '.':
+			speedupTravelers();
+			ok = 1;
+			break;
 
-        default:
-            ok = 1;
-            break;
-    }
-
-    if (!ok)
-    {
-        // do something?
-    }
+		default:
+			ok = 1;
+			break;
+	}
+	if (!ok)
+	{
+		//	do something?
+	}
 }
 
 
@@ -206,11 +193,7 @@ int main(int argc, char* argv[])
 	//	So far, I hard code-some values
 	numRows = std::atoi(argv[2]);
 	numCols = std::atoi(argv[1]);
-	numTravelers = std::atoi(argv[3]);
-
-	if (argc > 4) {
-		numAddSegments = std::atoi(argv[4]);
-	}
+	numTravelers = atoi(argv[3]);
 	numLiveThreads = 0;
 	numTravelersDone = 0;
 
@@ -219,10 +202,9 @@ int main(int argc, char* argv[])
 	//	function because that function passes them to glutInit, the required call
 	//	to the initialization of the glut library.
 	initializeFrontEnd(argc, argv);
-
+	
 	//	Now we can do application-level initialization
 	initializeApplication();
-	glutTimerFunc(travelerSleepTime, moveTravelers, 0);
 
 	launchTime = time(NULL);
 
@@ -253,6 +235,7 @@ int main(int argc, char* argv[])
 //	This is a function that you have to edit and add to.
 //
 //==================================================================================
+
 
 void initializeApplication(void)
 {
@@ -305,249 +288,35 @@ void initializeApplication(void)
 		traveler.segmentList.push_back(seg);
 		grid[pos.row][pos.col] = SquareType::TRAVELER;
 
-		//    I add 0-n segments to my travelers
- 	   unsigned int numAddSegments = segmentNumberGenerator(engine);
- 	   TravelerSegment currSeg = traveler.segmentList[0];
- 	   bool canAddSegment = true;
- 	   cout << "Traveler " << k << " at (row=" << pos.row << ", col=" <<
- 	   pos.col << "), direction: " << dirStr(dir) << ", with up to " << numAddSegments << " additional segments" << endl;
- 	   cout << "\t";
+        //    I add 0-n segments to my travelers
+        unsigned int numAddSegments = segmentNumberGenerator(engine);
+        TravelerSegment currSeg = traveler.segmentList[0];
+        bool canAddSegment = true;
+        cout << "Traveler " << k << " at (row=" << pos.row << ", col=" <<
+        pos.col << "), direction: " << dirStr(dir) << ", with up to " << numAddSegments << " additional segments" << endl;
+        cout << "\t";
 
-    	for (unsigned int s=0; s<numAddSegments && canAddSegment; s++){
-    	    	TravelerSegment newSeg = newTravelerSegment(currSeg, canAddSegment);
-   	     	if (canAddSegment){
-    	        traveler.segmentList.push_back(newSeg);
-    	        grid[newSeg.row][newSeg.col] = SquareType::TRAVELER;
-    	        currSeg = newSeg;
-    	        cout << dirStr(newSeg.dir) << "  ";
-    	    }
-    	}	
-    	cout << endl;
+        for (unsigned int s=0; s<numAddSegments && canAddSegment; s++){
+            TravelerSegment newSeg = newTravelerSegment(currSeg, canAddSegment);
+            if (canAddSegment){
+                traveler.segmentList.push_back(newSeg);
+                grid[newSeg.row][newSeg.col] = SquareType::TRAVELER;
+                currSeg = newSeg;
+                cout << dirStr(newSeg.dir) << "  ";
+            }
+        }
+        cout << endl;
 
 		for (unsigned int c=0; c<4; c++)
 			traveler.rgba[c] = travelerColor[k][c];
-		// Add thread traveler(moveTraveler, C)
+		
 		travelerList.push_back(traveler);
-		/*
-		for (int i = 0; i < numTravelers; i++) 	{
-			// Add thread traveler(moveTraveler, C)
-			moveTravelers();
-			travelerList.push_back(traveler);
-			numLiveThreads++;
-
-		}
-		*/
 	}
 	
 	//	free array of colors
 	for (unsigned int k=0; k<numTravelers; k++)
 		delete []travelerColor[k];
 	delete []travelerColor;
-
-	// Now that we have the traveler list, we can start the threads
-	// moveTravelers();
-}
-
-void moveTravelers (int value) {
-	// For each traveler...
-	for (unsigned int i=0; i<numTravelers; i++) {
-		Traveler *traveler = &travelerList[i];
-
-		// ..step once (if not at the exit already)!
-		if (!(traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col)) {
-
-			std::cout << "BEGIN moveTraveler()" << endl;
-			vector<Direction> legalDirectionList = getLegalDirectionList(*traveler);
-
-			Direction newDirection = getNewDirection(legalDirectionList);
-			std::cout << "\tTRAVELER START AT ROW " << traveler->segmentList[0].row << " COL " << traveler->segmentList[0].col << endl;
-
-			TravelerSegment seg;
-
-			switch (newDirection) {
-				case Direction::NORTH:
-					std::cout << "\tNORTH" << endl;
-					grid[traveler->segmentList[0].row - 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
-					seg = {traveler->segmentList[0].row - 1, traveler->segmentList[0].col, newDirection};
-					traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-					if (numAddSegments != counter) {
-						removeSegment(traveler);
-					}
-					else {
-						counter = 0;
-					}
-					counter++;
-					break;
-				case Direction::SOUTH:
-					std::cout << "\tSOUTH" << endl;
-					grid[traveler->segmentList[0].row + 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
-					seg = {traveler->segmentList[0].row + 1, traveler->segmentList[0].col, newDirection};
-					traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-					if (numAddSegments != counter) {
-						removeSegment(traveler);
-					}
-					else {
-						counter = 0;
-					}
-					counter++;
-					break;
-				case Direction::EAST:
-					std::cout << "\tEAST" << endl;
-					grid[traveler->segmentList[0].row][traveler->segmentList[0].col + 1] = SquareType::TRAVELER;
-					seg = {traveler->segmentList[0].row, traveler->segmentList[0].col + 1, newDirection};
-					traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-					if (numAddSegments != counter) {
-						removeSegment(traveler);
-					}
-					else {
-						counter = 0;
-					}
-					counter++;
-					break;
-				case Direction::WEST:
-					std::cout << "\tWEST" << endl;
-					grid[traveler->segmentList[0].row][traveler->segmentList[0].col - 1] = SquareType::TRAVELER;
-					seg = {traveler->segmentList[0].row, traveler->segmentList[0].col - 1, newDirection};
-					traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-					if (numAddSegments != counter) {
-						removeSegment(traveler);
-					}
-					else {
-						counter = 0;
-					}
-					counter++;
-					break;
-				case Direction::NUM_DIRECTIONS:
-					removeSegment(traveler);
-					break;
-			}
-
-			// while (traveler->segmentList.size() > 2) {
-			// 	TravelerSegment seg = traveler->segmentList.back();
-			// 	traveler->segmentList.pop_back();
-			// 	grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
-			// }
-
-			std::cout << "\tTRAVELER MOVE TO ROW " << traveler->segmentList[0].row << " COL " << traveler->segmentList[0].col << endl;
-			std::cout << "\tEND      ROW " << exitPos.row << " COL " << exitPos.col << endl;
-
-			if (traveler->segmentList[0].row == exitPos.row && traveler->segmentList[0].col == exitPos.col) {
-				numTravelersDone++;
-				std::cout << "\tTRAVELER DONE" << endl;
-				// std::cout << traveler->segmentList.size() << endl;
-				
-				for (int i = 0; traveler->segmentList.size() > 0; i++) {
-					TravelerSegment seg = traveler->segmentList.back();
-					traveler->segmentList.pop_back();
-					grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
-				}
-				
-				// std::cout << traveler->segmentList.size() << endl;
-				grid[exitPos.row][exitPos.col] = SquareType::EXIT;
-			}
-
-			std::cout << "END moveTraveler()" << endl;
-		}
-	}
-	drawTravelers();
-	glutTimerFunc(travelerSleepTime, moveTravelers, 0);
-}
-
-void removeSegment(Traveler *traveler) {
-	if (traveler->segmentList.size() > 1) {
-		TravelerSegment seg = traveler->segmentList.back();
-		traveler->segmentList.pop_back();
-		grid[seg.row][seg.col] = SquareType::FREE_SQUARE;
-	}
-}
-
-string checkSpace(int row, int col) {
-	if (grid[row][col] == SquareType::FREE_SQUARE) {
-			return "FREE";
-	}
-	if (grid[row][col] == SquareType::EXIT) {
-			return "Exit";
-	}
-	if (grid[row][col] == SquareType::WALL) {
-			return "Wall";
-	}
-	if (grid[row][col] == SquareType::HORIZONTAL_PARTITION || grid[row ][col] == SquareType::VERTICAL_PARTITION) {
-			return "Partition";
-	}
-	if (grid[row][col] == SquareType::TRAVELER) {
-			return "Traveler";
-	}
-
-	return "Out of Bounds";
-}
-
-vector<Direction> getLegalDirectionList (Traveler &traveler) {
-	std::cout << "BEGIN getLegalDirectionList()" << endl;
-	vector<Direction> legalDirectionList(0);
-
-	std::cout << traveler.segmentList.size() << " Size" << endl;
-	int row = traveler.segmentList[0].row;
-	int col = traveler.segmentList[0].col;
-
-	/* Check NORTH. */
-	if (row - 1 >= 0) {
-		std::cout << "\tChecking NORTH" << endl;
-		if (grid[row - 1][col] == SquareType::FREE_SQUARE || grid[row - 1][col] == SquareType::EXIT) {
-			legalDirectionList.push_back(Direction::NORTH);
-		}
-		std::cout << "\tNorth: " << checkSpace(row - 1, col) << endl;
-		std::cout << "\tChecking NORTH-END" << endl;
-	}
-
-	/* Check SOUTH. */
-	if (row + 1 < numRows) {
-		std::cout << "\tChecking SOUTH" << endl;
-		if (grid[row + 1][col] == SquareType::FREE_SQUARE || grid[row + 1][col] == SquareType::EXIT) {
-			legalDirectionList.push_back(Direction::SOUTH);
-		}
-		std::cout << "\tSouth: " << checkSpace(row + 1, col) << endl;
-		std::cout << "\tChecking SOUTH-END" << endl;
-	}
-
-	/* Check EAST. */
-	if (col + 1 < numCols) {
-		std::cout << "\tChecking EAST" << endl;
-		if (grid[row][col + 1] == SquareType::FREE_SQUARE || grid[row][col + 1] == SquareType::EXIT) {
-			legalDirectionList.push_back(Direction::EAST);
-		}
-		std::cout << "\tEast: " << checkSpace(row, col + 1) << endl;
-		std::cout << "\tChecking EAST-END" << endl;
-	}
-
-	/* Check WEST. */
-	if (col - 1 >= 0) {
-		std::cout << "\tChecking WEST" << endl;
-		if (grid[row][col - 1] == SquareType::FREE_SQUARE || grid[row][col - 1] == SquareType::EXIT) {
-			legalDirectionList.push_back(Direction::WEST);
-		}
-		std::cout << "\tWest: " << checkSpace(row, col - 1) << endl;
-		std::cout << "\tChecking WEST-END" << endl;
-	}
-
-	std::cout << "\tFound all legal directions." << endl;
-
-	/* Print the list. */
-	for (int i = 0; i < legalDirectionList.size(); i++) {
-		std::cout << "\tLEGAL DIRECTION: " << dirStr(legalDirectionList[i]) << endl;
-	}
-
-	std::cout << "END getLegalDirectionList()" << endl;
-
-	return legalDirectionList;
-}
-
-Direction getNewDirection (vector<Direction> legalDirectionList) {
-	if (legalDirectionList.size() == 0) {
-		std::cout << "HARD STOP" << endl;
-		return Direction::NUM_DIRECTIONS;
-		//exit(1);
-	}
-	return legalDirectionList[rand() % legalDirectionList.size()];
 }
 
 
@@ -589,6 +358,7 @@ Direction newDirection(Direction forbiddenDir)
 	}
 	return dir;
 }
+
 
 TravelerSegment newTravelerSegment(const TravelerSegment& currentSeg, bool& canAdd)
 {
@@ -845,3 +615,4 @@ void generatePartitions(void)
 		}
 	}
 }
+
