@@ -35,7 +35,8 @@ using namespace std;
 void initializeApplication(void);
 	void moveTravelers (int value);
 	vector<Direction> getLegalDirectionList (Traveler &traveler);
-	Direction getNewDirection (vector<Direction> legalDirectionList);
+	Direction getNewDirection (Traveler &traveler, vector<Direction> legalDirectionList);
+	bool isLegalDirection (Direction check, vector<Direction> legalDirectionList);
 	void removeSegment(Traveler *traveler);
 GridPosition getNewFreePosition(void);
 Direction newDirection(Direction forbiddenDir = Direction::NUM_DIRECTIONS);
@@ -330,7 +331,7 @@ void moveTravelers (int value) {
 			std::cout << "BEGIN moveTraveler()" << endl;
 			vector<Direction> legalDirectionList = getLegalDirectionList(*traveler);
 
-			Direction newDirection = getNewDirection(legalDirectionList);
+			Direction newDirection = getNewDirection(*traveler, legalDirectionList);
 			std::cout << "\tTRAVELER START AT ROW " << traveler->segmentList[0].row << " COL " << traveler->segmentList[0].col << endl;
 
 			TravelerSegment seg;
@@ -512,15 +513,55 @@ vector<Direction> getLegalDirectionList (Traveler &traveler) {
 	return legalDirectionList;
 }
 
-Direction getNewDirection (vector<Direction> legalDirectionList) {
+Direction getNewDirection (Traveler &traveler, vector<Direction> legalDirectionList) {
 	if (legalDirectionList.size() == 0) {
 		std::cout << "HARD STOP" << endl;
 		return Direction::NUM_DIRECTIONS;
 		//exit(1);
 	}
+
+	int xDist = traveler.segmentList[0].col - exitPos.col;
+	int yDist = traveler.segmentList[0].row - exitPos.row;
+	bool xAxisFailed = false;
+
+	cout << "xDist: " << xDist << endl;
+	cout << "yDist: " << yDist << endl;
+
+	if (abs(xDist) > abs(yDist)) {
+		if (xDist < 0 && isLegalDirection(Direction::EAST, legalDirectionList)) {
+			cout << "EAST" << endl;
+			return Direction::EAST;
+		}
+		else if (xDist > 0 && isLegalDirection(Direction::WEST, legalDirectionList)) {
+			cout << "WEST" << endl;
+			return Direction::WEST;
+		} else {
+			xAxisFailed = true;
+		}
+	}
+	
+	if (abs(xDist) < abs(yDist) || xAxisFailed) {
+		if (yDist > 0 && isLegalDirection(Direction::NORTH, legalDirectionList)) {
+			cout << "NORTH" << endl;
+			return Direction::NORTH;
+		}
+		else if (yDist < 0 && isLegalDirection(Direction::SOUTH, legalDirectionList)) {
+			cout << "SOUTH" << endl;
+			return Direction::SOUTH;
+		}
+	}
 	return legalDirectionList[rand() % legalDirectionList.size()];
 }
 
+bool isLegalDirection (Direction check, vector<Direction> legalDirectionList) {
+	for (int i = 0; i < legalDirectionList.size(); i++) {
+		if (check == legalDirectionList[i]) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 //------------------------------------------------------
 #if 0
