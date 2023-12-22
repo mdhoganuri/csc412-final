@@ -19,8 +19,8 @@ n/a
 | Version # | Status |
 | :--- | :--- |
 | 1 | COMPLETE. |
-| 2 | Work In Progress. |
-| 3 | Incomplete. |
+| 2 | COMPLETE. |
+| 3 | Work in progress. |
 | 4 | Incomplete. |
 | 5 | Incomplete. |
 | EC1 | Incomplete. |
