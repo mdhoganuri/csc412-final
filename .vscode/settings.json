@@ -4,6 +4,7 @@
         "limits": "cpp",
         "vector": "cpp",
         "utility": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "string": "cpp"
     }
 }
