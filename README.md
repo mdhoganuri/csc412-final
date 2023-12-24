@@ -23,7 +23,7 @@ n/a
 | 1 | COMPLETE. |
 | 2 | COMPLETE. |
 | 3 | COMPLETE. |
-| 4 | Work in progress. |
+| 4 | COMPLETE. |
 | 5 | Incomplete. |
 | EC1 | COMPLETE. |
 | EC2 | Incomplete. |
@@ -34,7 +34,7 @@ n/a
 | EC7 | Incomplete. |
 | EC8 | Incomplete. |
 | EC9 | Incomplete. |
-| EC10 | Incomplete. |
+| EC10 | COMPLETE. |
 
 **Report Document**: [Click Here](https://docs.google.com/document/d/14JoR9pFftxTYR84h85z7gBj7KmjU0FPTZACrFsum8zM/edit?usp=sharing)
 

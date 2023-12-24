@@ -29,6 +29,7 @@ using namespace std;
 struct TravelerThreadInfo {
 	Traveler *traveler;
 	int *sleepTime;
+	unsigned int counter = 0;
 };
 
 #if 0
@@ -65,7 +66,6 @@ unsigned int numRows = 0;	//	height of the grid
 unsigned int numCols = 0;	//	width
 unsigned int numTravelers = 0;	//	initial number
 unsigned int numAddSegments = 0;
-unsigned int counter = 0; // counter for when segments will be added
 unsigned int numTravelersDone = 0;
 unsigned int numLiveThreads = 0;		//	the number of live traveler threads
 vector<Traveler> travelerList;
@@ -350,52 +350,52 @@ void moveThreaded (TravelerThreadInfo *info) {
 				grid[traveler->segmentList[0].row - 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row - 1, traveler->segmentList[0].col, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::SOUTH:
 				std::cout << "\tSOUTH" << endl;
 				grid[traveler->segmentList[0].row + 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row + 1, traveler->segmentList[0].col, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::EAST:
 				std::cout << "\tEAST" << endl;
 				grid[traveler->segmentList[0].row][traveler->segmentList[0].col + 1] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row, traveler->segmentList[0].col + 1, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::WEST:
 				std::cout << "\tWEST" << endl;
 				grid[traveler->segmentList[0].row][traveler->segmentList[0].col - 1] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row, traveler->segmentList[0].col - 1, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::NUM_DIRECTIONS:
 				removeSegment(traveler);

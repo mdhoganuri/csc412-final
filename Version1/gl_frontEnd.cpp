@@ -650,7 +650,7 @@ void initializeFrontEnd(int argc, char* argv[])
 
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(INIT_WIN_X, INIT_WIN_Y);
-	gMainWindow = glutCreateWindow("Partitioned Travelers -- CSC 412 - Fall 2020");
+	gMainWindow = glutCreateWindow("Partitioned Travelers -- CSC 412 - Fall 2023");
 	glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 
 	//	set up the callbacks for the main window

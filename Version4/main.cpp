@@ -30,6 +30,7 @@ using namespace std;
 struct TravelerThreadInfo {
 	Traveler *traveler;
 	int *sleepTime;
+	unsigned int counter = 0;
 };
 
 #if 0
@@ -67,7 +68,6 @@ unsigned int numRows = 0;	//	height of the grid
 unsigned int numCols = 0;	//	width
 unsigned int numTravelers = 0;	//	initial number
 unsigned int numAddSegments = 0;
-unsigned int counter = 0; // counter for when segments will be added
 unsigned int numTravelersDone = 0;
 unsigned int numLiveThreads = 0;		//	the number of live traveler threads
 vector<Traveler> travelerList;
@@ -354,49 +354,49 @@ void moveThreaded (TravelerThreadInfo *info) {
 				grid[traveler->segmentList[0].row - 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row - 1, traveler->segmentList[0].col, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::SOUTH:
 				grid[traveler->segmentList[0].row + 1][traveler->segmentList[0].col] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row + 1, traveler->segmentList[0].col, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::EAST:
 				grid[traveler->segmentList[0].row][traveler->segmentList[0].col + 1] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row, traveler->segmentList[0].col + 1, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::WEST:
 				grid[traveler->segmentList[0].row][traveler->segmentList[0].col - 1] = SquareType::TRAVELER;
 				seg = {traveler->segmentList[0].row, traveler->segmentList[0].col - 1, newDirection};
 				traveler->segmentList.insert(traveler->segmentList.begin(), seg);
-				if (numAddSegments != counter) {
+				if (numAddSegments != info->counter) {
 					removeSegment(traveler);
 				}
 				else {
-					counter = 0;
+					info->counter = 0;
 				}
-				counter++;
+				info->counter++;
 				break;
 			case Direction::NUM_DIRECTIONS:
 				removeSegment(traveler);
@@ -504,13 +504,25 @@ Direction getNewDirection (Traveler &traveler, vector<Direction> legalDirectionL
 			if (partitionMoveCheck(traveler, Direction::EAST) || isLegalDirection(Direction::EAST, legalDirectionList)) {
 				return Direction::EAST;
 			}
-			return legalDirectionList[rand() % legalDirectionList.size()];
+
+			if (legalDirectionList.size() > 0) {
+				return legalDirectionList[rand() % legalDirectionList.size()];
+			}
+			else {
+				return Direction::NUM_DIRECTIONS;
+			}
 		}
 		if (xDist > 0) {
 			if (partitionMoveCheck(traveler, Direction::WEST) || isLegalDirection(Direction::WEST, legalDirectionList)) {
 				return Direction::WEST;
 			}
-			return legalDirectionList[rand() % legalDirectionList.size()];
+
+			if (legalDirectionList.size() > 0) {
+				return legalDirectionList[rand() % legalDirectionList.size()];
+			}
+			else {
+				return Direction::NUM_DIRECTIONS;
+			}
 		}
 	}
 	
@@ -519,13 +531,24 @@ Direction getNewDirection (Traveler &traveler, vector<Direction> legalDirectionL
 			if (partitionMoveCheck(traveler, Direction::NORTH) || isLegalDirection(Direction::NORTH, legalDirectionList)) {
 				return Direction::NORTH;
 			}
-			return legalDirectionList[rand() % legalDirectionList.size()];
+
+			if (legalDirectionList.size() > 0) {
+				return legalDirectionList[rand() % legalDirectionList.size()];
+			}
+			else {
+				return Direction::NUM_DIRECTIONS;
+			}
 		}
 		if (yDist < 0) {
 			if (partitionMoveCheck(traveler, Direction::SOUTH) || isLegalDirection(Direction::SOUTH, legalDirectionList)) {
 				return Direction::SOUTH;
 			}
-			return legalDirectionList[rand() % legalDirectionList.size()];
+			if (legalDirectionList.size() > 0) {
+				return legalDirectionList[rand() % legalDirectionList.size()];
+			}
+			else {
+				return Direction::NUM_DIRECTIONS;
+			}
 		}
 	}
 	return legalDirectionList[rand() % legalDirectionList.size()];
@@ -537,7 +560,6 @@ bool isLegalDirection (Direction check, vector<Direction> legalDirectionList) {
 			return true;
 		}
 	}
-
 	return false;
 }
 
@@ -594,7 +616,10 @@ bool partitionMoveCheck (Traveler &traveler, Direction check) {
 			if (partitionList[p].blockList[b].row == rowPos && partitionList[p].blockList[b].col == colPos) {
 				cout << "FOUND!" << endl;
 				cout << "\t-> Partition is at (" << partitionList[p].blockList[b].row << ", " << partitionList[p].blockList[b].col << ")." << endl;
+				cout << "\t-> PartitionList Size = " << partitionList.size() << endl;
+				cout << "\t-> P = " << p << endl;
 				partition = &partitionList[p];
+				break;
 			}
 		}
 	}
@@ -605,60 +630,57 @@ bool partitionMoveCheck (Traveler &traveler, Direction check) {
 	if (grid[rowPos][colPos] == SquareType::HORIZONTAL_PARTITION) {
 		// Calculate the distance from each end of the partition to the traveler.
 		int movesLeft = (-1) * (partition->blockList[partition->blockList.size()-1].col - colPos);
-		int movesRight = (-1) * (colPos - partition->blockList[0].col);
-		bool movePossible = true;
+		int movesRight = (1) * (colPos - partition->blockList[0].col);
+
+		bool canLeft = false;
+		bool canRight = false;
 
 		cout << "Moves left: " << movesLeft << "..." << endl;
 		cout << "Moves right: " << movesRight << "..." << endl;
-		
-		// Check which direction to try and move first.
-		if (abs(movesLeft) + 1 <= abs(movesRight) + 1) {
-			// Bounds check on movesLeft.
-			if (partition->blockList[0].col - abs(movesLeft) - 1 < 0) {
-				cout << "FAILED!" << endl;
-				return false;
-			}
 
-			// See if we can move our partition to the left by movesLeft spaces.
-			for (int i = 0; i < abs(movesLeft); i++) {
+		// Check if we can move LEFT.
+		if (partition->blockList[0].col - abs(movesLeft) - 1 >= 0 && partition->blockList[0].col - abs(movesLeft) - 1 < numCols) {
+			canLeft = true;
+
+			for (int i = 0; i < abs(movesLeft) + 1; i++) {
 				if (grid[partition->blockList[0].row][partition->blockList[0].col - i - 1] != SquareType::FREE_SQUARE) {
-					cout << "FAILED!" << endl;
-					movePossible = false;
-				}
-			}
-
-			if (movePossible) {
-				cout << "PASSED!" << endl;
-
-				// Make the move.				
-				for (int i = 0; i < partition->blockList.size(); i++) {
-					grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
-					partition->blockList[i].col -= (abs(movesLeft) + 1);
-				}
-
-				for (int i = 0; i < partition->blockList.size(); i++) {
-					grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::HORIZONTAL_PARTITION;
+					canLeft = false;
 				}
 			}
 		}
 
-		if (abs(movesLeft) + 1 > abs(movesRight) + 1 || !movePossible) {
-			// Bounds check on movesRight.
-			if (partition->blockList[partition->blockList.size() - 1].col + abs(movesRight) + 1 >= numCols) {
-				cout << "Nope!" << endl;
-				return false;
-			}
+		cout << "\t\t- LEFT: " << canLeft << "..." << endl;
+		
+		// Check if we can move RIGHT.
+		if (partition->blockList[partition->blockList.size() - 1].col + abs(movesRight) + 1 >= 0 && partition->blockList[partition->blockList.size() - 1].col + abs(movesRight) + 1 < numCols) {
+			canRight = true;
 
-			// See if we can move our partition to the right by movesRight spaces.
-			for (int i = 0; i < abs(movesRight); i++) {
+			for (int i = 0; i < abs(movesRight) + 1; i++) {
 				if (grid[partition->blockList[0].row][partition->blockList[0].col + i + 1] != SquareType::FREE_SQUARE) {
-					cout << "FAILED!" << endl;
-					return false;
+					canRight = false;
 				}
 			}
-			cout << "PASSED!" << endl;
+		}
+		
+		cout << "\t\t- RIGHT: " << canRight << "..." << endl;
 
-			// Make the move.
+		// Move the partition to the LEFT if it's optimal.
+		if (canLeft && abs(movesLeft) + 1 <= abs(movesRight) + 1) {
+			for (int i = 0; i < partition->blockList.size(); i++) {
+				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
+				partition->blockList[i].col -= (abs(movesLeft) + 1);
+			}
+
+			for (int i = 0; i < partition->blockList.size(); i++) {
+				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::HORIZONTAL_PARTITION;
+			}
+
+			return true;
+		}
+
+		// Move the partition to the RIGHT if it's optimal.
+		// ALTERNATIVE: Move the partition to the RIGHT if it's the only option.
+		if ((canRight && abs(movesLeft) + 1 > abs(movesRight) + 1) || (canRight && !canLeft)) {
 			for (int i = 0; i < partition->blockList.size(); i++) {
 				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
 				partition->blockList[i].col += (abs(movesRight) + 1);
@@ -667,63 +689,65 @@ bool partitionMoveCheck (Traveler &traveler, Direction check) {
 			for (int i = 0; i < partition->blockList.size(); i++) {
 				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::HORIZONTAL_PARTITION;
 			}
+
+			return true;
 		}
 	}
 
 	if (grid[rowPos][colPos] == SquareType::VERTICAL_PARTITION) {
 		// Calculate the distance from each end of the partition to the traveler.
 		int movesUp = (-1) * (partition->blockList[partition->blockList.size()-1].row - rowPos);
-		int movesDown = (-1) * (rowPos - partition->blockList[0].row);
-		bool movePossible = true;
-		
-		// Check which direction to try and move first.
-		if (abs(movesUp) <= abs(movesDown)) {
-			// Bounds check on movesUp.
-			if (partition->blockList[0].row - abs(movesUp) - 1 < 0) {
-				cout << "FAILED!" << endl;
-				return false;
-			}
+		int movesDown = (1) * (rowPos - partition->blockList[0].row);
 
-			// See if we can move our partition up by movesUp spaces.
-			for (int i = 0; i < abs(movesUp); i++) {
+		bool canUp = false;
+		bool canDown = false;
+
+		cout << "Moves up: " << canUp << "..." << endl;
+		cout << "Moves down: " << canDown << "..." << endl;
+
+		// Check if we can move UP.
+		if (partition->blockList[0].row - abs(movesUp) - 1 >= 0 && partition->blockList[0].row - abs(movesUp) - 1 < numRows) {
+			canUp = true;
+
+			for (int i = 0; i < abs(movesUp) + 1; i++) {
 				if (grid[partition->blockList[0].row - i - 1][partition->blockList[0].col] != SquareType::FREE_SQUARE) {
-					cout << "FAILED!" << endl;
-					movePossible = false;
-				}
-			}
-
-			if (movePossible) {
-				cout << "PASSED!" << endl;
-
-				// Make the move.				
-				for (int i = 0; i < partition->blockList.size(); i++) {
-					grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
-					partition->blockList[i].row -= (abs(movesUp) + 1);
-				}
-
-				for (int i = 0; i < partition->blockList.size(); i++) {
-					grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::VERTICAL_PARTITION;
+					canUp = false;
 				}
 			}
 		}
 
-		if (abs(movesUp) > abs(movesDown) || !movePossible) {
-			// Bounds check on movesDown.
-			if (partition->blockList[partition->blockList.size() - 1].row + abs(movesDown) + 1 >= numRows) {
-				cout << "Nope!" << endl;
-				return false;
-			}
+		cout << "\t\t- UP: " << canUp << "..." << endl;
+		
+		// Check if we can move DOWN.
+		if (partition->blockList[partition->blockList.size() - 1].row + abs(movesDown) + 1 >= 0 || partition->blockList[partition->blockList.size() - 1].row + abs(movesDown) + 1 < numRows) {
+			canDown = true;
 
-			// See if we can move our partition to the right by movesRight spaces.
-			for (int i = 0; i < abs(movesDown); i++) {
+			for (int i = 0; i < abs(movesUp) + 1; i++) {
 				if (grid[partition->blockList[0].row + i + 1][partition->blockList[0].col] != SquareType::FREE_SQUARE) {
-					cout << "FAILED!" << endl;
-					return false;
+					canDown = false;
 				}
 			}
-			cout << "PASSED!" << endl;
+		}
 
-			// Make the move.
+		cout << "\t\t- DOWN: " << canDown << "..." << endl;
+
+		// Move the partition UP if it's optimal.
+		if (canUp && abs(movesUp) + 1 <= abs(movesDown) + 1) {
+			for (int i = 0; i < partition->blockList.size(); i++) {
+				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
+				partition->blockList[i].row -= (abs(movesUp) + 1);
+			}
+
+			for (int i = 0; i < partition->blockList.size(); i++) {
+				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::VERTICAL_PARTITION;
+			}
+
+			return true;
+		}
+
+		// Move the partition DOWN if it's optimal.
+		// ALTERNATIVE: Move the partition to the RIGHT if it's the only option.
+		if ((canDown && abs(movesUp) + 1 > abs(movesDown) + 1) || (canDown && !canUp)) {
 			for (int i = 0; i < partition->blockList.size(); i++) {
 				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::FREE_SQUARE;
 				partition->blockList[i].row += (abs(movesDown) + 1);
@@ -732,10 +756,12 @@ bool partitionMoveCheck (Traveler &traveler, Direction check) {
 			for (int i = 0; i < partition->blockList.size(); i++) {
 				grid[partition->blockList[i].row][partition->blockList[i].col] = SquareType::VERTICAL_PARTITION;
 			}
+
+			return true;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 //------------------------------------------------------

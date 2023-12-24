@@ -182,8 +182,8 @@ int main (int argc, char* argv[]) {
 	//	So far, I hard code-some values
 	numRows = std::atoi(argv[2]);
 	numCols = std::atoi(argv[1]);
-	numTravelers = std::atoi(argv[3]);
-	(argc > 4) ? numAddSegments = std::atoi(argv[4]) : numAddSegments = INT_MAX;
+	numTravelers = 1; // std::atoi(argv[3]);
+	(argc > 3) ? numAddSegments = std::atoi(argv[3]) : numAddSegments = INT_MAX;
 	numLiveThreads = 0;
 	numTravelersDone = 0;
 
